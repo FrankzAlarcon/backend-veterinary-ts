@@ -1,15 +1,12 @@
 type ID = string | number;
 
-export interface Veterinarian {
+
+interface Veterinarian {
   id: ID,
   name: string,
   email: string,
   password: string,
 }
-
-export type CreateVeterinarian = Omit<Veterinarian, 'id'>;
-
-export type UpdateVeterinarian = Partial<CreateVeterinarian>;
 
 export type BaseCustomer = Omit<Veterinarian, 'password'>;
 

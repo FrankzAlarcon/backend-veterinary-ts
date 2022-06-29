@@ -1,0 +1,65 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model Customer {
+  id Int @id @default(autoincrement())
+  name String
+  email String @unique
+  pets Pet[]
+  appointments Appointment[]
+  createdAt DateTime @default(now())
+}
+
+model Pet {
+  id Int @id @default(autoincrement())
+  name String
+  animalType String
+  owner Customer @relation(fields: [customerId], references: [id])
+  customerId Int
+  createdAt DateTime @default(now())
+}
+
+model Veterinarian {
+  id Int @id @default(autoincrement())
+  name String
+  email String @unique
+  password String
+  tasks Task[]
+  appointments Appointment[]
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id Int @id @default(autoincrement())
+  text String
+  priority Priority @default(MEDIUM)
+  veterinarian Veterinarian @relation(fields: [veterinarianId], references: [id])
+  veterinarianId Int
+  createdAt DateTime @default(now())
+}
+
+model Appointment {
+  id Int @id @default(autoincrement())
+  date DateTime
+  symptoms String
+  prescription String
+  isCompleted Boolean @default(false)
+  price Float?
+  veterinarian Veterinarian @relation(fields: [veterinarianId], references: [id])
+  veterinarianId Int
+  customer Customer @relation(fields: [customerId], references: [id])
+  customerId Int
+  createdAt DateTime @default(now())
+}

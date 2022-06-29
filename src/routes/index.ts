@@ -6,8 +6,8 @@ const router = Router();
 
 function setRoutes(app: Express): void {
   app.use('/api/v1', router);
-  router.use('/veterinarian', veterinariansRouter);
-  router.use('/customer', customersRouter);
+  router.use('/veterinarians', veterinariansRouter);
+  router.use('/customers', customersRouter);
 }
 
 export default setRoutes;

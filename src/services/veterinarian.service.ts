@@ -1,78 +1,106 @@
-import Chance from 'chance';
 import boom from '@hapi/boom';
-import { CreateVeterinarian, UpdateVeterinarian, Veterinarian } from '../types/types';
+import bcrypt from 'bcrypt';
+import { PrismaClient, Task, Veterinarian } from '@prisma/client';
+import { CreateVeterinarian, UpdateVeterinarian, TotalUpdateVeterinarian, CreateTask, UpdateTask } from '../types/veterinarian';
 
-const chance = new Chance;
-
+const prisma = new PrismaClient();
 class VeterinarianService {
 
-  private veterinarians: Veterinarian[] = [];
-
-  constructor() {
-    this.generate();
+  async getAll(): Promise<Veterinarian[]> {
+    const veterinarians = await prisma.veterinarian.findMany();
+    return veterinarians;
   }
 
-  private generate(): void {
-    for (let i = 0; i < 20 ; i++) {      
-      this.veterinarians.push({
-        id: chance.guid(),
-        name: chance.name(),
-        email: chance.email(),
-        password: chance.word({capitalize: true, length: 10})
-      })
+  async getOne(id: number): Promise<Veterinarian> {
+    const veterinarian = await prisma.veterinarian.findUnique({where: {id}});
+    if(!veterinarian) {
+      throw boom.notFound('Veterinarian not found');
     }
+    return veterinarian;
   }
 
-  getAll(): Veterinarian[] {
-    return this.veterinarians;
+  async getAllTasks(id: number): Promise<Task[]> {
+    const tasks = await prisma.task.findMany({where: { veterinarianId: id }});
+    if(!tasks) {
+      throw boom.badRequest('Veterinarian does not exists');
+    }
+    return tasks;
   }
 
-  getOne(id: string): Veterinarian | undefined {
-    return this.veterinarians.find(vet => vet.id === id);
+  async create(body: CreateVeterinarian): Promise<Veterinarian> {
+    const password = await bcrypt.hash(body.password, 10);
+    const veterinarianData:CreateVeterinarian = {
+      ...body,
+      password
+    }
+    const veterinarian = await prisma.veterinarian.create({data: veterinarianData});
+    return veterinarian;
   }
 
-  create(body: CreateVeterinarian): Veterinarian {
-    const newVet = {
-      id: chance.guid(),
-      ...body
+  async createTask(id: number, body: CreateTask): Promise<Task> {
+    const veterinarian = await prisma.veterinarian.findUnique({where: {id}});
+    if(!veterinarian) {
+      throw boom.notFound('Veterinarian not found');
     }
-    this.veterinarians.push(newVet);
-    return newVet;
+    const task = await prisma.task.create({data: {
+      ...body,
+      veterinarianId: id
+    }});
+    return task;
   }
 
-  totalUpdate(id: string, changes: CreateVeterinarian): Veterinarian {
-    const indexVetToUpdate = this.veterinarians.findIndex(vet => vet.id === id);
-    if(indexVetToUpdate === -1) {
-      throw boom.badRequest('Incorrect or missing id')
+  async totalUpdate(id: number, changes: TotalUpdateVeterinarian): Promise<Veterinarian> {
+    const veterinarian =  await prisma.veterinarian.update({where: {id}, data: changes});
+    if(!veterinarian) {
+      throw boom.notFound('Incorrect or missing id')
     }
-    const vetToUpdate = this.veterinarians[indexVetToUpdate];
-    this.veterinarians[indexVetToUpdate] = {
-      ...vetToUpdate,
-      ...changes
-    }
-    return this.veterinarians[indexVetToUpdate];
+    return veterinarian;
   }
 
-  partialUpdate(id: string, changes: UpdateVeterinarian): Veterinarian {
-    const indexVetToUpdate = this.veterinarians.findIndex(vet => vet.id === id);
-    if(indexVetToUpdate === -1) {
-      throw boom.badRequest('Incorrect or missing id')
+  async partialUpdate(id: number, changes: UpdateVeterinarian): Promise<Veterinarian> {
+    const veterinarian = await prisma.veterinarian.update({where: {id}, data: changes})
+    if(!veterinarian) {
+      throw boom.notFound('Incorrect or missing id')
     }
-    const vetToUpdate = this.veterinarians[indexVetToUpdate];
-    this.veterinarians[indexVetToUpdate] = {
-      ...vetToUpdate,
-      ...changes
-    }
-    return this.veterinarians[indexVetToUpdate];
+    return veterinarian;
   }
 
-  delete(id: string): string {
-    const indexVetToUpdate = this.veterinarians.findIndex(vet => vet.id === id);
-    if(indexVetToUpdate === -1) {
-      throw boom.badRequest('Incorrect or missing id')
+  async updateTask(veterinarianId: number, taskId: number, changes: UpdateTask): Promise<Task> {
+    const veterinarian =  await prisma.veterinarian.findUnique({
+      where: {id: veterinarianId},
+      include: {tasks: true}
+    });
+    if(!veterinarian) {
+      throw boom.notFound('Veterinarian not found');
     }
-    this.veterinarians.splice(indexVetToUpdate, 1)
-    return `Veterinarian ${id} was deleted correctly`;
+    if(!veterinarian.tasks.some((task) => task.id === taskId)) {
+      throw boom.forbidden(`Task ${taskId} does not belong to Veterinarian ${veterinarianId}`);
+    }
+    const task = await prisma.task.update({where: {id: taskId}, data: changes});
+    return task;
+  }
+
+  async delete(id: number): Promise<string> {
+    const veterinarianDeleted = await prisma.veterinarian.delete({where: {id}})
+    if(!veterinarianDeleted) {
+      throw boom.notFound('Incorrect or missing id')
+    }
+    return `Deleted veterinarian ${veterinarianDeleted.id}`;
+  }
+
+  async deleteTask(veterinarianId: number, taskId: number): Promise<string> {
+    const veterinarian =  await prisma.veterinarian.findUnique({
+      where: { id: veterinarianId},
+      include: { tasks: true }
+    });
+    if(!veterinarian) {
+      throw boom.notFound('Veterinarian not found');
+    }
+    if(!veterinarian.tasks.some((task) => task.id === taskId)) {
+      throw boom.forbidden(`Task ${taskId} does not belong to Veterinarian ${veterinarianId}`)
+    }
+    const taskDeleted = await prisma.task.delete({where: {id: taskId}});
+    return `Deleted task ${taskDeleted.id}`;
   }
 }
 

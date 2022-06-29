@@ -1,69 +1,131 @@
 import { Router } from "express";
 import Response from "../libs/Response";
 import { validationHandler } from "../middlewares/validationHandler";
-import { createVeterinarianSchema, updateVeterinarianSchema, veterinarianIdSchema } from "../schemas/veterinarian.schema";
+import { createVeterinarianSchema, updateVeterinarianSchema, veterinarianIdSchema, totalUpdateVeterinarianSchema, createTaskSchema, taskAndVeterinarianIdSchema, updateTaskSchema } from "../schemas/veterinarian.schema";
 import VeterinarianService from "../services/veterinarian.service";
 
 const router = Router();
 const response = new Response();
 const veterinarianService = new VeterinarianService();
 
-router.get('/', (_req, res, next) => {
+/**get all veterinarians */
+router.get('/', async (_req, res, next) => {
   try {
-    const vets = veterinarianService.getAll();
+    const vets = await veterinarianService.getAll();
     response.success(res, vets)
   } catch (error) {
     next(error)
   }
 });
-
-router.get('/:id', (req, res, next) => {
+/**get a veterinarian by id */
+router.get('/:id', validationHandler(veterinarianIdSchema, 'params'), async (req, res, next) => {
   try {
     const {id} = req.params;
-    const vet = veterinarianService.getOne(id)
+    const vet = await veterinarianService.getOne(Number(id))
     response.success(res, vet)
   } catch (error) {
     next(error);
   }
 });
-
-router.post('/',validationHandler(createVeterinarianSchema, 'body'), (req, res, next) => {
+/**get all tasks of a veterinarian */
+router.get('/:id/tasks', validationHandler(veterinarianIdSchema, 'params'), async (req, res, next) => {
+  try {
+    const {id} = req.params;
+    const tasks = await veterinarianService.getAllTasks(Number(id));
+    response.success(res, tasks);
+  } catch (error) {
+    next(error);
+  }
+})
+/**create a veterinarian */
+router.post('/',validationHandler(createVeterinarianSchema, 'body'), async (req, res, next) => {
   try {
     const { body } = req;
-    const newVet = veterinarianService.create(body)
+    const newVet = await veterinarianService.create(body)
     response.success(res, newVet)
   } catch (error) {
     next(error)
   }
 });
+/**create a task for a veterinari, it needs a valid veterinarian id */
+router.post(
+  '/:id/tasks',
+  validationHandler(veterinarianIdSchema, 'params'),
+  validationHandler(createTaskSchema, 'body'),
+  async (req, res, next) => {
+  try {
+    const {id} = req.params;
+    const {body} = req;
+    const task = await veterinarianService.createTask(Number(id), body);
+    response.success(res, task);
+  } catch (error) {
+    next(error);
+  }
+})
 
-router.put('/:id', validationHandler(veterinarianIdSchema, 'params'), validationHandler(updateVeterinarianSchema, 'body'), (req, res, next) => {
+/**total update of a veterinarian, it needs id and changes */
+router.put(
+  '/:id',
+  validationHandler(veterinarianIdSchema, 'params'),
+  validationHandler(totalUpdateVeterinarianSchema, 'body'),
+  async (req, res, next) => {
   try {
     const {id} = req.params;
     const {body} = req; 
-    const updatedVet = veterinarianService.totalUpdate(id, body);
+    const updatedVet = await veterinarianService.totalUpdate(Number(id), body);
     response.success(res, updatedVet);
   } catch (error) {
     next(error);
   }
 });
 
-router.patch('/:id', validationHandler(veterinarianIdSchema, 'params'), validationHandler(updateVeterinarianSchema, 'body'), (req, res, next) => {
+/**Patial update of a veterinarian */
+router.patch(
+  '/:id',
+  validationHandler(veterinarianIdSchema, 'params'),
+  validationHandler(updateVeterinarianSchema, 'body'),
+  async (req, res, next) => {
   try {
     const { id } = req.params;
     const { body } = req;
-    const updatedVet = veterinarianService.partialUpdate(id, body);
+    const updatedVet = await veterinarianService.partialUpdate(Number(id), body);
     response.success(res, updatedVet);
   } catch (error) {
     next(error);
   }
 });
-
-router.delete('/:id', validationHandler(veterinarianIdSchema, 'params'), (req, res, next) => {
+/**Partial update of a task */
+router.patch(
+  '/:veterinarianId/tasks/:taskId',
+  validationHandler(taskAndVeterinarianIdSchema, 'params'),
+  validationHandler(updateTaskSchema, 'body'),
+  async (req, res, next) => {
+    try {
+      const {taskId, veterinarianId} = req.params;
+      const {body} = req;
+      const task = await veterinarianService.updateTask(Number(veterinarianId), Number(taskId), body);
+      response.success(res, task)
+    } catch (error) {
+      next(error);
+    }
+  })
+/**Delete a veterinarian */
+router.delete('/:id', validationHandler(veterinarianIdSchema, 'params'), async (req, res, next) => {
   try {
     const {id} = req.params;
-    const message = veterinarianService.delete(id);
+    const message = await veterinarianService.delete(Number(id));
     response.success(res, message)
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**Delete a task */
+router.delete('/:veterinarianId/tasks/:taskId', validationHandler(taskAndVeterinarianIdSchema, 'params'), async (req, res, next) => {
+  try {
+    const {veterinarianId, taskId} = req.params;
+    const message =await veterinarianService.deleteTask(Number(veterinarianId), Number(taskId));
+    response.success(res, message);
   } catch (error) {
     next(error);
   }
