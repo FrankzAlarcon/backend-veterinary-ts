@@ -1,106 +1,84 @@
-import { CreateCustomer, CreatePet, Customer, ID, Pet, UpdateCustomer } from "../types/types";
-import Chance from "chance";
+import { PrismaClient, Customer, Pet } from "@prisma/client";
+import boom from '@hapi/boom'
+import { CreateCustomer, CreatePet, UpdateCustomer, UpdatePet } from "../types/customer";
 
-const chance = new Chance();
-
+const prisma = new PrismaClient();
 class CustomerService {
 
-  private customers: Customer[] = [];
-  
-  constructor() {
-    this.generate();
+  async getAll(): Promise<Customer[]> {
+    const customers = await prisma.customer.findMany();
+    return customers;
   }
 
-  generate(): void {
-    for (let i = 0; i < 20; i++) {
-      this.customers.push({
-        id: chance.guid(),
-        name: chance.name(),
-        email: chance.email(),
-        pets: [
-          {
-            id: chance.guid(),
-            petName: chance.name(),
-            animalType: chance.animal({type: 'pet'})
-          },
-          {
-            id: chance.guid(),
-            petName: chance.name(),
-            animalType: chance.animal({type: 'pet'})
-          }
-        ]
-      })
+  async getOne(id: number): Promise<Customer> {
+    const customer = await prisma.customer.findUnique({where: { id }, include: {pets: true}});
+    if(!customer) {
+      throw boom.notFound('Customer not found');
     }
+    return customer;
   }
 
-  getAll(): Customer[] {
-    return this.customers;
+  async create(body: CreateCustomer): Promise<Customer> {
+    const customer = await prisma.customer.create({data: body});
+    return customer;
   }
 
-  getOne(id: ID): Customer | undefined {
-    return this.customers.find(customer => customer.id === id);
-  }
-
-  create(body: CreateCustomer): Customer {
-    const newCustomer = {
-      id: chance.guid(),
+  async addPet(id: number, body: CreatePet): Promise<Pet> {
+    const customer = await prisma.customer.findUnique({where: {id}});
+    if(!customer) {
+      throw boom.notFound('Customer not found');
+    }
+    const pet = await prisma.pet.create({data: {
       ...body,
-      pets: []
-    }
-    this.customers.push(newCustomer);
-    return newCustomer;
+      customerId: id
+    }});
+    return pet;
   }
 
-  addPet(id: ID, body: CreatePet): Pet {
-    const customerIndex = this.customers.findIndex(customer => customer.id === id);
-    if(customerIndex === -1) {
-      throw new Error('Customer not found');
-    }
-    const newPet = {
-      id: chance.guid(),
-      ...body
-    };
-    if(!this.customers[customerIndex].pets) {
-      this.customers[customerIndex].pets = [];
-    }
-    this.customers[customerIndex].pets?.push(newPet);    
-    return newPet;
+  async totalUpdate(id: number, changes: CreateCustomer): Promise<Customer> {
+    const customer = await prisma.customer.update({where: {id}, data: changes});
+    return customer;
   }
 
-  totalUpdate(id: ID, changes: CreateCustomer): Customer {
-    const customerIndex = this.customers.findIndex(customer => customer.id === id);
-    if(customerIndex === -1) {
-      throw new Error('Customer not found');
-    }
-    const customerToUpdate = this.customers[customerIndex];
-    this.customers[customerIndex] = {
-      ...customerToUpdate,
-      ...changes
-    };
-    return this.customers[customerIndex];    
+  async partialUpdate(id: number, changes: UpdateCustomer): Promise<Customer> {
+    const customer = await prisma.customer.update({where: {id}, data: changes});
+    return customer;
   }
 
-  partialUpdate(id: ID, changes: UpdateCustomer): Customer {
-    const customerIndex = this.customers.findIndex(customer => customer.id === id);
-    if(customerIndex === -1) {
-      throw new Error('Customer not found');
+  async updatePet(customerId: number, petId:number, changes: UpdatePet) {
+    const customer = await prisma.customer.findUnique({
+      where: { id: customerId },
+      include: { pets: true }
+    });
+    if(!customer) {
+      throw boom.notFound('Customer not found');
     }
-    const customerToUpdate = this.customers[customerIndex];
-    this.customers[customerIndex] = {
-      ...customerToUpdate,
-      ...changes
+    if(!customer.pets.some((pet) => pet.id === petId)) {
+      throw boom.forbidden(`Pet ${petId} does not belong to Customer ${customerId}`);
     }
-
-    return this.customers[customerIndex];
+    const pet = prisma.pet.update({where: {id: petId}, data: changes});
+    return pet;
   }
 
-  deleteOne(id: ID): string {
-    const customerIndex = this.customers.findIndex(customer => customer.id === id);
-    if(customerIndex === -1) {
-      throw new Error('Customer not found');
+  async deleteOne(id: number): Promise<string> {
+    const customerDeleted = await prisma.customer.delete({where: {id}});
+    if(!customerDeleted) {
+      throw boom.notFound('Customer not found');
+    }    
+    return `Customer ${id} deleted`;
+  }
+
+  async deletePet(customerId: number, petId: number) {
+    const customer = await prisma.customer.findUnique({where: {id: customerId}, include: {pets: true}});
+    if(!customer) {
+      throw boom.notFound('Customer not found');
     }
-    this.customers.splice(customerIndex, 1);
-    return `Customer ${id} was deleted`;
+    if(!customer.pets.some(pet => pet.id === petId)) {
+      throw boom.forbidden(`Pet ${petId} does not belong to Customer ${customerId}`);
+    }
+    const petDeleted = await prisma.pet.delete({where: {id: petId}});
+    return `Pet ${petDeleted.id} deleted`
+    
   }
 }
 

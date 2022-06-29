@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-const id = Joi.string().uuid();
+const id = Joi.string();
 const name = Joi.string().min(3);
 const email = Joi.string().email();
 
@@ -12,32 +12,36 @@ const getIdSchema = Joi.object({
 })
 
 const createPetSchema = Joi.object({
-  petName: name.required(),
+  name: name.required(),
   animalType: animalType.required()
 });
 
 const createCustomerSchema = Joi.object({
   name: name.required(),
-  email: email.required(),
-  pets: Joi.array().items(createPetSchema)
+  email: email.required()
 });
 
 const updateCustomerSchema = Joi.object({
   name,
-  email,
-  pets: Joi.array().items(createPetSchema)
+  email
 });
 
 const updatePetSchema = Joi.object({
-  petName: name,
+  name,
   animalType
 });
+
+const customerAndPetIdSchema = Joi.object({
+  customerId: id.required(),
+  petId: id.required(),
+})
 
 export {
   createCustomerSchema,
   createPetSchema,
   getIdSchema,
   updateCustomerSchema,
-  updatePetSchema
+  updatePetSchema,
+  customerAndPetIdSchema
 }
 
