@@ -28,6 +28,7 @@ model Pet {
   animalType String
   owner Customer @relation(fields: [customerId], references: [id])
   customerId Int
+  appointments Appointment[]
   createdAt DateTime @default(now())
 }
 
@@ -36,6 +37,8 @@ model Veterinarian {
   name String
   email String @unique
   password String
+  token String?
+  isConfirmed Boolean @default(false)
   tasks Task[]
   appointments Appointment[]
   createdAt DateTime @default(now())
@@ -61,5 +64,7 @@ model Appointment {
   veterinarianId Int
   customer Customer @relation(fields: [customerId], references: [id])
   customerId Int
+  pet Pet @relation(fields: [petId], references: [id])
+  petId Int
   createdAt DateTime @default(now())
 }

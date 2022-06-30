@@ -5,13 +5,16 @@ interface Veterinarian {
   name: string,
   email: string,
   password: string,
+  token: string?
 }
 
-export type CreateVeterinarian = Omit<Veterinarian, 'id'>;
+export type CreateVeterinarian = Omit<Veterinarian, 'id' | 'token'>;
 
-export type TotalUpdateVeterinarian = Omit<Veterinarian, 'id' | 'password'>;
+export type TotalUpdateVeterinarian = Omit<Veterinarian, 'id' | 'password' | 'token'>;
 
 export type UpdateVeterinarian = Partial<CreateVeterinarian>;
+
+export type VerifyVeterinarianAccount = Omit<Veterinarian, 'password' | 'id'>;
 
 interface Task {
   id: number,
