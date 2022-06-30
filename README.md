@@ -7,7 +7,7 @@ Nodejs backend for a Veterinary app
 - Express
 - Typescript
 - Docker
-- PostgreSQL DB
+- Postgresql DB
 - Prisma ORM
 
 #### Clone this project
