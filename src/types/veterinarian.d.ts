@@ -16,6 +16,8 @@ export type UpdateVeterinarian = Partial<CreateVeterinarian>;
 
 export type VerifyVeterinarianAccount = Omit<Veterinarian, 'password' | 'id'>;
 
+export type LoginVeterinarian = Omit<Veterinarian, 'id' | 'name' | 'token'>
+
 interface Task {
   id: number,
   text: string,

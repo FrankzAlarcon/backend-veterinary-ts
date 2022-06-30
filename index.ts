@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import setRoutes from './src/routes';
-import { boomErrorHandler, errorHandler, logError, prismaErrorHandler } from './src/middlewares/errorHandler';
+import { boomErrorHandler, errorHandler, jwtErrorHandler, logError, prismaErrorHandler } from './src/middlewares/errorHandler';
 import { config } from 'dotenv';
 
 config();
@@ -15,6 +15,7 @@ setRoutes(app);
 
 app.use(logError);
 app.use(prismaErrorHandler);
+app.use(jwtErrorHandler);
 app.use(boomErrorHandler);
 app.use(errorHandler);
 

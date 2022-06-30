@@ -20,7 +20,7 @@ router.get('/', async (_req, res, next) => {
 /**get a veterinarian by id */
 router.get('/:id', validationHandler(veterinarianIdSchema, 'params'), async (req, res, next) => {
   try {
-    const {id} = req.params;
+    const {id} = req.params;    
     const vet = await veterinarianService.getOne(Number(id))
     response.success(res, vet)
   } catch (error) {

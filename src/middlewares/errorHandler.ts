@@ -1,5 +1,6 @@
 import { PrismaClientInitializationError, PrismaClientKnownRequestError, PrismaClientRustPanicError, PrismaClientUnknownRequestError, PrismaClientValidationError } from '@prisma/client/runtime';
 import {Response, Request, NextFunction} from 'express';
+import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 
 export function logError(error: any, _req: Request, _res: Response, next: NextFunction): void {
   console.log(error);
@@ -36,6 +37,18 @@ export function prismaErrorHandler(error: PrismaError, _req: Request, res: Respo
   } else if (error instanceof PrismaClientValidationError) {
     const {message} = error;
     res.status(409).json({error: message, body: ''});
+  }
+  next(error);
+}
+
+type JwtError = JsonWebTokenError | TokenExpiredError;
+
+export function jwtErrorHandler(error: JwtError, _req: Request, res: Response, next: NextFunction) {
+  if(error instanceof TokenExpiredError || error instanceof JsonWebTokenError) {
+    res.status(400).json({error: {
+      name: error.name,
+      message: error.message
+    }, body: ''});
   }
   next(error);
 }

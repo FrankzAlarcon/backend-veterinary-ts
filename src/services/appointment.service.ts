@@ -12,7 +12,7 @@ class AppointmentService {
   }
 
   async getOne(id: number): Promise<Appointment> {
-    const appointment = await prisma.appointment.findUnique({where: {id}});
+    const appointment = await prisma.appointment.findUnique({where: {id}, include: {pet: true}});
     if(!appointment) {
       throw boom.notFound('Appointment not found');
     }
@@ -46,7 +46,7 @@ class AppointmentService {
     if(veterinarianId) {
       const veterinarian = await prisma.veterinarian.findUnique({where: {id: veterinarianId}});
       if(!veterinarian) {
-        throw boom.notFound('Veterinarian not founf');
+        throw boom.notFound('Veterinarian not found');
       }      
     }
     if(customerId && petId) {
@@ -57,7 +57,7 @@ class AppointmentService {
       if(customer.status === 'rejected' || pet.status === 'rejected') {     
         throw boom.notFound('Customer or pet do not exist');
       }
-      if(pet.value?.customerId === customerId) {
+      if(pet.value?.customerId !== customerId) {
         throw boom.badRequest(`Customer ${customerId} is not owner of Pet ${petId}`);
       }
     } else {

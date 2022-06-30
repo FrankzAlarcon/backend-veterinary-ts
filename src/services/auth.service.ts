@@ -2,13 +2,22 @@ import { PrismaClient } from "@prisma/client";
 import EmailService from "../libs/Emails";
 import boom from '@hapi/boom';
 import bcrypt from 'bcrypt';
-import { CreateVeterinarian } from "../types/veterinarian";
+import { CreateVeterinarian, LoginVeterinarian } from "../types/veterinarian";
 import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 const emailService = new EmailService();
 
 class AuthService {
+
+  /**
+   * Flujo
+   * Me registro y creo el usuario en la base de datos asignadole un token, con un flag de usuario no confirmado
+   * Envío un email con un link para que confirme su usuario
+   * Verifico que el link es correcto verificando el token de la base de datos, 
+   *  si es correcto -> isConfirmed = true
+   *  no es correcto -> excepcion token no valido
+   */
   async register(data: CreateVeterinarian): Promise<string> {
     const {name,email, password}= data;
     const user = await prisma.veterinarian.findUnique({where: { email }});
@@ -16,7 +25,7 @@ class AuthService {
       throw boom.badRequest('Usuario ya registrado')
     }
     const encryptedPassword = await bcrypt.hash(password, 10);
-    const token = jwt.sign({email}, process.env.JWT_EMAIL_SECRET ?? 'mysupersecretkey', {expiresIn: '15m'})
+    const token = jwt.sign({email}, process.env.JWT_EMAIL_SECRET ?? 'mysupersecretkey', {expiresIn: '15m', algorithm: 'HS256'})
     await prisma.veterinarian.create({data: {
       ...data,
       password: encryptedPassword,
@@ -30,14 +39,98 @@ class AuthService {
   }
 
   async confirmAccount(token:string): Promise<void> {
-    const isTokenVerified = jwt.verify(token, process.env.JWT_EMAIL_SECRET ?? 'mysupersecretkey');
-    if(!isTokenVerified) {
-      throw boom.forbidden('Tu token ha expirado, vuelve a solicitar tu confirmacion')
-    }
+    //* Token ya verificado
     const user = await prisma.veterinarian.findFirst({where: {token}});
     if(!user) {
-
+      throw boom.notFound('Token invalido');
     }
+    const data: { email: string} = JSON.parse(token);
+    await prisma.veterinarian.update({where: {email: data.email}, data: {token: null, isConfirmed: true}});
+  }
+
+  async resendEmail(email: string, type: 'verify' | 'recovery-password'): Promise<string> {
+    const user = await prisma.veterinarian.findUnique({where: {email}});
+    if(!user) {
+      throw boom.notFound('No existe usuario con el email ingresado');
+    }
+    const token = jwt.sign({id: user.id}, process.env.JWT_EMAIL_SECRET ?? 'mysupersecretkey', {expiresIn: '15m', algorithm: 'HS256'});
+    await prisma.veterinarian.update({where: {email}, data: {token}});
+    if(type === 'verify') {
+      emailService.verifyAccount({
+        name: user.name,
+        email: user.email,
+        token
+      });
+      return 'Revisa tu email para verificar tu cuenta';
+    } else {
+      emailService.recoveryPassword({
+        name: user.name,
+        email: user.email,
+        token
+      });
+      return `Hemos enviado un email con las instrucciones a: ${email}`
+    }
+  }
+
+  async login(credentials: LoginVeterinarian) {
+    const {email, password} = credentials;
+    const user = await prisma.veterinarian.findUnique({where: {email}});
+    if (!user) {
+      throw boom.notFound('El usuario no está registrado');
+    }
+    if(!user.isConfirmed) {
+      throw boom.forbidden('El usuario no está confirmado');
+    }
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if(!isPasswordCorrect) {
+      throw boom.forbidden('Email o contraseña incorrectos')
+    }
+    const token = jwt.sign({id: user.id}, process.env.JWT_AUTH_SECRET ?? 'mysupersecretkey', {expiresIn: '30d', algorithm: 'HS256'});
+    //Lo que le paso al frontend
+    const authedUser = {
+      name: user.name,
+      email: user.email,
+      token
+    }
+    return authedUser;
+  }
+  /**
+   * Flujo Recuperar contraseña
+   *  Envío, en una peticion post, un email con el link para que pueda restaurar su contraseña
+   *  Verificación de que el link abierto tiene el token correcto
+   *  Realizar una peticion post con la nueva contraseña
+   */
+  async recoveryPassword(email: string): Promise<string> {
+    const user = await prisma.veterinarian.findUnique({where: {email}});
+    if (!user) {
+      throw boom.notFound('No existe un usuario con el email ingresado');
+    }
+    const token = jwt.sign({email}, process.env.JWT_EMAIL_SECRET ?? 'mysupersecretkey', {expiresIn: '15m', algorithm: 'HS256'})
+    await prisma.veterinarian.update({where: {email}, data: {token}})
+    emailService.recoveryPassword({
+      name: user.name,
+      email: user.email,
+      token
+    });
+    return `Hemos enviado un email con las instrucciones a: ${email}`;
+  }
+
+  async checkToken(token: string): Promise<string> {
+    const user = await prisma.veterinarian.findFirst({where: {token}});
+    if(!user) {
+      throw boom.notFound('Token inválido')
+    }
+    return 'token válido';
+  }
+
+  async setNewPassword(token: string, password: string): Promise<string> {
+    const user = await prisma.veterinarian.findFirst({where: {token}});
+    if (!user) {
+      throw boom.notFound('Token no válido');
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await prisma.veterinarian.update({where: {email: user.email}, data: {token: null, password: hashedPassword}});
+    return 'Contraseña cambiada correctamente';
   }
 }
 
