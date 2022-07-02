@@ -14,7 +14,7 @@ export function errorHandler(error: any, _req: Request, res: Response, _next: Ne
 export function boomErrorHandler(error: any, _req: Request, res: Response, next: NextFunction):void {
   if(error.isBoom) {
     const { output } = error;
-    res.status(output.statusCode).json(output.payload);
+    res.status(output.statusCode).json({error: output.payload, body: ''});
   }
   next(error);
 }
@@ -30,13 +30,13 @@ export function prismaErrorHandler(error: PrismaError, _req: Request, res: Respo
     res.status(409).json({error: {message, meta}, body: ''});
   } else if (error instanceof PrismaClientUnknownRequestError) {
     const {message} = error;
-    res.status(500).json({error: message, body: ''});
+    res.status(500).json({error: {message}, body: ''});
   } else if (error instanceof PrismaClientRustPanicError) {
     const {message} = error;
-    res.status(502).json({error: message, body: ''});
+    res.status(502).json({error: {message}, body: ''});
   } else if (error instanceof PrismaClientValidationError) {
     const {message} = error;
-    res.status(409).json({error: message, body: ''});
+    res.status(409).json({error: {message}, body: ''});
   }
   next(error);
 }

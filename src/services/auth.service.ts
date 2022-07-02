@@ -22,7 +22,7 @@ class AuthService {
     const {name,email, password}= data;
     const user = await prisma.veterinarian.findUnique({where: { email }});
     if(user) {
-      throw boom.badRequest('Usuario ya registrado')
+      throw boom.badRequest('Ya existe un usuario con ese email')
     }
     const encryptedPassword = await bcrypt.hash(password, 10);
     const token = jwt.sign({email}, process.env.JWT_EMAIL_SECRET ?? 'mysupersecretkey', {expiresIn: '15m', algorithm: 'HS256'})
@@ -38,14 +38,15 @@ class AuthService {
     return 'Usuario creado correctamente. Revisa tu email para verificar tu cuenta';
   }
 
-  async confirmAccount(token:string): Promise<void> {
+  async confirmAccount(token:string): Promise<boolean> {
     //* Token ya verificado
     const user = await prisma.veterinarian.findFirst({where: {token}});
     if(!user) {
       throw boom.notFound('Token invalido');
     }
-    const data: { email: string} = JSON.parse(token);
-    await prisma.veterinarian.update({where: {email: data.email}, data: {token: null, isConfirmed: true}});
+    const data = user.email;
+    await prisma.veterinarian.update({where: {email: data}, data: {token: null, isConfirmed: true}});
+    return true;
   }
 
   async resendEmail(email: string, type: 'verify' | 'recovery-password'): Promise<string> {
@@ -76,7 +77,7 @@ class AuthService {
     const {email, password} = credentials;
     const user = await prisma.veterinarian.findUnique({where: {email}});
     if (!user) {
-      throw boom.notFound('El usuario no está registrado');
+      throw boom.notFound('Email o contraseña incorrectos');
     }
     if(!user.isConfirmed) {
       throw boom.forbidden('El usuario no está confirmado');
@@ -88,6 +89,7 @@ class AuthService {
     const token = jwt.sign({id: user.id}, process.env.JWT_AUTH_SECRET ?? 'mysupersecretkey', {expiresIn: '30d', algorithm: 'HS256'});
     //Lo que le paso al frontend
     const authedUser = {
+      id: user.id,
       name: user.name,
       email: user.email,
       token
@@ -115,12 +117,12 @@ class AuthService {
     return `Hemos enviado un email con las instrucciones a: ${email}`;
   }
 
-  async checkToken(token: string): Promise<string> {
+  async checkToken(token: string): Promise<boolean> {
     const user = await prisma.veterinarian.findFirst({where: {token}});
     if(!user) {
       throw boom.notFound('Token inválido')
     }
-    return 'token válido';
+    return true;
   }
 
   async setNewPassword(token: string, password: string): Promise<string> {

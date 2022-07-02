@@ -45,12 +45,12 @@ router.get('/confirm-account/:token',validationHandler(tokenSchema, 'params'), a
 router.post('/resend-email/:type', validationHandler(emailSchema, 'body'), async (req, res, next) => {
   try {
     const {type} = req.params;
-    const {body} = req;
+    const {body} = req;    
     if(type === 'verify') {
-      const message = await authService.resendEmail(body, type);
+      const message = await authService.resendEmail(body.email, type);
       response.success(res, message);
     } else if (type === 'recovery-password') {
-      const message = await authService.resendEmail(body, type);
+      const message = await authService.resendEmail(body.email, type);
       response.success(res, message);
     }    
   } catch (error) {
@@ -78,7 +78,7 @@ router.post('/login', validationHandler(loginSchema, 'body'), async (req, res, n
 router.post('/recovery-password', validationHandler(emailSchema, 'body'), async (req, res, next) => {
   try {
     const {body} = req;
-    const message = await authService.recoveryPassword(body);
+    const message = await authService.recoveryPassword(body.email);
     response.success(res, message);
   } catch (error) {
     next(error);
@@ -103,7 +103,7 @@ router.post('/recovery-password/:token',validationHandler(tokenSchema, 'params')
   try {
     const {token} = req.params;
     const {body} = req;
-    const message = await authService.setNewPassword(token, body);
+    const message = await authService.setNewPassword(token, body.password);
     response.success(res, message);
   } catch (error) {
     next(error);

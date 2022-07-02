@@ -17,7 +17,7 @@ export async function checkAuthHandler(req: Request, _res: Response, next: NextF
       const user = await prisma.veterinarian.findUnique({
         where: {id: decoded.id},
         select: {
-          name: true, email: true
+          id:true, name: true, email: true
         }
       });
       if(!user) {
