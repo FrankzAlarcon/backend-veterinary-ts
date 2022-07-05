@@ -11,10 +11,15 @@ class CustomerService {
   }
 
   async getOne(id: number): Promise<Customer> {
-    const customer = await prisma.customer.findUnique({where: { id }, include: {pets: true}});
+    const customer = await prisma.customer.findUnique({where: { id }, include: {pets: true, appointments: true}});
     if(!customer) {
       throw boom.notFound('Customer not found');
     }
+    return customer;
+  }
+
+  async getOneByEmail(email: string): Promise<Customer | null> {
+    const customer = await prisma.customer.findUnique({where: {email}, include: {pets: true, appointments: true}});
     return customer;
   }
 

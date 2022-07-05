@@ -1,7 +1,7 @@
 import { Router } from "express";
 import Response from "../libs/Response";
 import CustomerService from "../services/customer.service";
-import { createCustomerSchema, createPetSchema, customerAndPetIdSchema, getIdSchema, updateCustomerSchema, updatePetSchema } from "../schemas/customer.schema";
+import { createCustomerSchema, createPetSchema, customerAndPetIdSchema, getByEmailSchema, getIdSchema, updateCustomerSchema, updatePetSchema } from "../schemas/customer.schema";
 import { validationHandler } from "../middlewares/validationHandler";
 
 const router = Router();
@@ -27,6 +27,17 @@ router.get('/:id', validationHandler(getIdSchema, 'params'), async (req, res, ne
     next(error);
   }
 });
+/**Get by email */
+router.get('/email/:email', validationHandler(getByEmailSchema, 'params'), async (req, res, next) => {
+  try {
+    const {email} = req.params;
+    const user = await customerService.getOneByEmail(email);
+    response.success(res, user);   
+  } catch (error) {
+    next(error);
+  }
+})
+
 /**Create a customer */
 router.post('/', validationHandler(createCustomerSchema, 'body'), async (req, res, next) => {
   try {

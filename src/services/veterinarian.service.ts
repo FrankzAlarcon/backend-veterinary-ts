@@ -1,6 +1,6 @@
 import boom from '@hapi/boom';
 import bcrypt from 'bcrypt';
-import { PrismaClient, Task, Veterinarian } from '@prisma/client';
+import { Appointment, PrismaClient, Task, Veterinarian } from '@prisma/client';
 import { CreateVeterinarian, UpdateVeterinarian, TotalUpdateVeterinarian, CreateTask, UpdateTask } from '../types/veterinarian';
 
 const prisma = new PrismaClient();
@@ -27,11 +27,23 @@ class VeterinarianService {
     return tasks;
   }
 
+  async getAllAppointments(id: number): Promise<Appointment[]> {
+    const appointments = await prisma.appointment.findMany({where: {veterinarianId: id} });
+    if(!appointments) {
+      throw boom.badRequest('Veterinarian does not exists');
+    }
+    return appointments;
+  }
+
   async create(body: CreateVeterinarian): Promise<Veterinarian> {
     const password = await bcrypt.hash(body.password, 10);
     const veterinarianData:CreateVeterinarian = {
       ...body,
       password
+    }
+    const existVeterinarian = await prisma.veterinarian.findUnique({where: {email: body.email}});
+    if(existVeterinarian) {
+      throw 'Ya existe un usuario con ese email';
     }
     const veterinarian = await prisma.veterinarian.create({data: veterinarianData});
     return veterinarian;

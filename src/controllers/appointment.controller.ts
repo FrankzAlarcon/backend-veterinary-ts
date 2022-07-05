@@ -1,5 +1,7 @@
 import { Router } from "express";
 import Response from "../libs/Response";
+import { checkVeterinarianToDelete } from "../middlewares/checkAuthHandler";
+import { checkVeterinarianInAppointment } from "../middlewares/checkUserHandler";
 import { validationHandler } from "../middlewares/validationHandler";
 import { appointmentIdSchema, createAppointmentSchema, updateAppointmentSchema } from "../schemas/appointment.schema";
 import AppointmentService from "../services/appointment.service";
@@ -28,7 +30,7 @@ router.get('/:id', validationHandler(appointmentIdSchema, 'params'), async (req,
   }
 });
 /**Create an appointment */
-router.post('/',validationHandler(createAppointmentSchema, 'body'), async (req, res, next) => {
+router.post('/',validationHandler(createAppointmentSchema, 'body'), checkVeterinarianInAppointment, async (req, res, next) => {
   try {
     const {body} = req;
     const appointment = await appointmentService.create(body);
@@ -53,7 +55,7 @@ router.patch(
     }
 })
 
-router.delete('/:id', validationHandler(appointmentIdSchema, 'params'), async (req, res, next) => {
+router.delete('/:id', validationHandler(appointmentIdSchema, 'params'), checkVeterinarianToDelete, async (req, res, next) => {
   try {
     const {id} = req.params;
     const message = await appointmentService.delete(Number(id));

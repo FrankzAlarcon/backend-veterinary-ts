@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Response from "../libs/Response";
+import { checkUserHandler } from "../middlewares/checkUserHandler";
 import { validationHandler } from "../middlewares/validationHandler";
 import { createVeterinarianSchema, updateVeterinarianSchema, veterinarianIdSchema, totalUpdateVeterinarianSchema, createTaskSchema, taskAndVeterinarianIdSchema, updateTaskSchema } from "../schemas/veterinarian.schema";
 import VeterinarianService from "../services/veterinarian.service";
@@ -17,6 +18,7 @@ router.get('/', async (_req, res, next) => {
     next(error)
   }
 });
+
 /**get a veterinarian by id */
 router.get('/:id', validationHandler(veterinarianIdSchema, 'params'), async (req, res, next) => {
   try {
@@ -28,15 +30,25 @@ router.get('/:id', validationHandler(veterinarianIdSchema, 'params'), async (req
   }
 });
 /**get all tasks of a veterinarian */
-router.get('/:id/tasks', validationHandler(veterinarianIdSchema, 'params'), async (req, res, next) => {
+router.get('/:id/tasks', validationHandler(veterinarianIdSchema, 'params'), checkUserHandler,async (req, res, next) => {
   try {
-    const {id} = req.params;
+    const {id} = req.params;     
     const tasks = await veterinarianService.getAllTasks(Number(id));
     response.success(res, tasks);
   } catch (error) {
     next(error);
   }
 })
+
+router.get('/:id/appointments', validationHandler(veterinarianIdSchema, 'params'), checkUserHandler, async (req, res, next) => {
+  try {
+    const {id} = req.params;
+    const appointments = await veterinarianService.getAllAppointments(Number(id));
+    response.success(res, appointments);
+  } catch (error) {
+    next(error);
+  }
+});
 /**create a veterinarian */
 router.post('/',validationHandler(createVeterinarianSchema, 'body'), async (req, res, next) => {
   try {
@@ -47,11 +59,12 @@ router.post('/',validationHandler(createVeterinarianSchema, 'body'), async (req,
     next(error)
   }
 });
-/**create a task for a veterinari, it needs a valid veterinarian id */
+/**create a task for a veterinary, it needs a valid veterinarian id */
 router.post(
   '/:id/tasks',
   validationHandler(veterinarianIdSchema, 'params'),
   validationHandler(createTaskSchema, 'body'),
+  checkUserHandler,
   async (req, res, next) => {
   try {
     const {id} = req.params;

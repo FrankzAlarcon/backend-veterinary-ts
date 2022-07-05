@@ -11,6 +11,10 @@ const getIdSchema = Joi.object({
   id: id.required(),
 })
 
+const getByEmailSchema = Joi.object({
+  email: email.required()
+});
+
 const createPetSchema = Joi.object({
   name: name.required(),
   animalType: animalType.required()
@@ -42,6 +46,7 @@ export {
   getIdSchema,
   updateCustomerSchema,
   updatePetSchema,
-  customerAndPetIdSchema
+  customerAndPetIdSchema,
+  getByEmailSchema
 }
 
