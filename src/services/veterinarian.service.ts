@@ -19,7 +19,7 @@ class VeterinarianService {
     return veterinarian;
   }
 
-  async getPatientsInfo(id: number) {
+  async getCustomerInfo(id: number) {
     const data: any = await prisma.$queryRaw`select distinct "Customer".id, "Customer".name,
     email, citas_terminadas, citas_pendientes, num_pets from "Customer"
     join "Appointment" on ("Customer".id = "Appointment"."customerId")

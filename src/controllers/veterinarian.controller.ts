@@ -30,11 +30,11 @@ router.get('/:id', validationHandler(veterinarianIdSchema, 'params'), async (req
   }
 });
 
-router.get('/:id/patients', validationHandler(veterinarianIdSchema, 'params'), checkUserHandler, async (req, res, next) => {
+router.get('/:id/customers', validationHandler(veterinarianIdSchema, 'params'), checkUserHandler, async (req, res, next) => {
   try {
     const {id} = req.params
-    const patientsInfo:any = await veterinarianService.getPatientsInfo(Number(id));
-    response.success(res, patientsInfo)
+    const customersInfo:any = await veterinarianService.getCustomerInfo(Number(id));
+    response.success(res, customersInfo)
   } catch (error) {
     next(error)
   }
