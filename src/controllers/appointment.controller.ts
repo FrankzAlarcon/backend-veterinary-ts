@@ -1,6 +1,7 @@
 import { Router } from "express";
+import boom from '@hapi/boom';
 import Response from "../libs/Response";
-import { checkVeterinarianToDelete } from "../middlewares/checkAuthHandler";
+import { checkGetOneAppointment, checkVeterinarianToDelete } from "../middlewares/checkAuthHandler";
 import { checkVeterinarianInAppointment } from "../middlewares/checkUserHandler";
 import { validationHandler } from "../middlewares/validationHandler";
 import { appointmentIdSchema, createAppointmentSchema, updateAppointmentSchema } from "../schemas/appointment.schema";
@@ -22,9 +23,14 @@ router.get('/', async (_req, res, next) => {
 /**get an appointment by id */
 router.get('/:id', validationHandler(appointmentIdSchema, 'params'), async (req, res, next) => {
   try {
-    const {id} = req.params;
-    const appointment = await appointmentService.getOne(Number(id));
-    response.success(res, appointment);
+    const {id} = req.params;    
+    const appointment = await appointmentService.getOne(Number(id)); 
+    const belongToVet = checkGetOneAppointment(appointment.veterinarianId, req);
+    if(belongToVet) {
+      response.success(res, appointment);
+    } else {
+      next(boom.forbidden('Ha ocurrido un error'));
+    }
   } catch (error) {
     next(error);
   }

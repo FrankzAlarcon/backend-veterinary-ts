@@ -51,3 +51,10 @@ export async function checkVeterinarianToDelete(req: Request, _res: Response, ne
     }
   }
 }
+
+export function checkGetOneAppointment(veterinarianId: number, req: Request) {
+  if(veterinarianId === req.user?.id) {
+    return true;
+  }
+  return false;
+}

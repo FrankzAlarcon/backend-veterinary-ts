@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request } from "express";
 import Response from "../libs/Response";
 import CustomerService from "../services/customer.service";
 import { createCustomerSchema, createPetSchema, customerAndPetIdSchema, getByEmailSchema, getIdSchema, updateCustomerSchema, updatePetSchema } from "../schemas/customer.schema";
@@ -7,6 +7,12 @@ import { validationHandler } from "../middlewares/validationHandler";
 const router = Router();
 const customerService = new CustomerService();
 const response = new Response();
+
+declare module "express" {
+  export interface Request {
+    user?: {id: number, name: string, email: string}
+  }
+}
 
 /**get all customers */
 router.get('/', async (_req, res, next) => {
@@ -18,10 +24,10 @@ router.get('/', async (_req, res, next) => {
   }
 });
 /**Get a customer by id */
-router.get('/:id', validationHandler(getIdSchema, 'params'), async (req, res, next) => {
+router.get('/:id', validationHandler(getIdSchema, 'params'), async (req: Request, res, next) => {
   try {
     const { id } = req.params;
-    const customer = await customerService.getOne(Number(id));
+    const customer = await customerService.getOne(Number(id), Number(req.user?.id));
     response.success(res, customer);
   } catch (error) {
     next(error);

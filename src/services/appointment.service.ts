@@ -12,7 +12,9 @@ class AppointmentService {
   }
 
   async getOne(id: number): Promise<Appointment> {
-    const appointment = await prisma.appointment.findUnique({where: {id}, include: {pet: true}});
+    const appointment = await prisma.appointment.findUnique({where: {id}, include: {pet: true, customer: {
+      include: { pets: true}
+    }}});
     if(!appointment) {
       throw boom.notFound('Appointment not found');
     }

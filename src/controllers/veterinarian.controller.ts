@@ -29,6 +29,17 @@ router.get('/:id', validationHandler(veterinarianIdSchema, 'params'), async (req
     next(error);
   }
 });
+
+router.get('/:id/patients', validationHandler(veterinarianIdSchema, 'params'), checkUserHandler, async (req, res, next) => {
+  try {
+    const {id} = req.params
+    const patientsInfo:any = await veterinarianService.getPatientsInfo(Number(id));
+    response.success(res, patientsInfo)
+  } catch (error) {
+    next(error)
+  }
+})
+
 /**get all tasks of a veterinarian */
 router.get('/:id/tasks', validationHandler(veterinarianIdSchema, 'params'), checkUserHandler,async (req, res, next) => {
   try {

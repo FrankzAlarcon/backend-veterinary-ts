@@ -19,6 +19,39 @@ class VeterinarianService {
     return veterinarian;
   }
 
+  async getPatientsInfo(id: number) {
+    const data: any = await prisma.$queryRaw`select distinct "Customer".id, "Customer".name,
+    email, citas_terminadas, citas_pendientes, num_pets from "Customer"
+    join "Appointment" on ("Customer".id = "Appointment"."customerId")
+    left join (
+      select "Customer".id, count(*) as citas_pendientes from "Customer"
+      join "Appointment" on "Customer".id = "Appointment"."customerId"
+      where "Appointment"."veterinarianId" = ${id}
+      and "Appointment"."isCompleted" = false
+      group by "Customer".id
+    ) as citas2 on citas2.id = "Customer".id
+    left join (
+      select "Customer".id, count(*) as citas_terminadas from "Customer"
+      join "Appointment" on "Customer".id = "Appointment"."customerId"
+      where "Appointment"."veterinarianId" = ${id}
+      and "Appointment"."isCompleted" = true
+      group by "Customer".id
+    ) as citas on citas.id = "Customer".id
+    left join (
+      select "Customer".id, count(*) as num_pets from "Pet"
+      join "Customer" on "Customer".id = "Pet"."customerId"     
+      group by "Customer".id
+    ) as patientPets on patientPets.id = "Customer".id
+    where "Appointment"."veterinarianId" = ${id}`;
+    const validData = data.map((entry: any) => ({
+      ...entry,
+      citas_terminadas: entry.citas_terminadas ? parseInt(entry.citas_terminadas) : null,
+      citas_pendientes: entry.citas_pendientes ? parseInt(entry.citas_pendientes) : null,
+      num_pets: entry.num_pets ? parseInt(entry.num_pets) : null,
+    }))
+    return validData;
+  }
+
   async getAllTasks(id: number): Promise<Task[]> {
     const tasks = await prisma.task.findMany({where: { veterinarianId: id }});
     if(!tasks) {

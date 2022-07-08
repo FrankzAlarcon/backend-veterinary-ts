@@ -100,5 +100,6 @@
   },
   "files": [
     "./src/types/auth.d.ts"
-  ]
+  ],
+  "exclude": ["node_modules"]
 }
