@@ -12,7 +12,8 @@ class CustomerService {
 
   async getOne(id: number, veterinarianId: number): Promise<Customer> {
     const customer = await prisma.customer.findUnique({where: { id }, include: {pets: true, appointments: {
-      where: {veterinarianId}
+      where: {veterinarianId},
+      include: {pet: true}
     }}});
     if(!customer) {
       throw boom.notFound('Customer not found');

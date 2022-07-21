@@ -133,6 +133,18 @@ class VeterinarianService {
     return `Deleted veterinarian ${veterinarianDeleted.id}`;
   }
 
+  async deleteAllAppointments(veterinarianId: number, customerId:number): Promise<string> {
+    const appointments = await prisma.appointment.findMany({where: {veterinarianId, customerId}});
+    if(!appointments) {
+      throw boom.notFound('Appointments not found');
+    }
+    const appointmentsDeleted = await prisma.appointment.deleteMany({where: {veterinarianId, customerId}});
+    if(!appointmentsDeleted) {
+      throw boom.notFound('Appointments not found');
+    }
+    return `Deleted appointments ${appointmentsDeleted.count}`;
+  }
+
   async deleteTask(veterinarianId: number, taskId: number): Promise<string> {
     const veterinarian =  await prisma.veterinarian.findUnique({
       where: { id: veterinarianId},

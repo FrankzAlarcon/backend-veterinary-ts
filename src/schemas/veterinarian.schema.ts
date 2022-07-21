@@ -19,6 +19,11 @@ export const taskAndVeterinarianIdSchema = Joi.object({
   taskId: id.required()
 })
 
+export const customerAndVeterinarianIdSchema = Joi.object({
+  veterinarianId: id.required(),
+  customerId: id.required()
+});
+
 export const createVeterinarianSchema = Joi.object({
   name: name.required(),
   email: email.required(),

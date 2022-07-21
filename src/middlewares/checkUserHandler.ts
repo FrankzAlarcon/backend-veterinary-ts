@@ -20,6 +20,19 @@ export async function checkUserHandler(req: Request, _res: Response, next: NextF
   }
 }
 
+export async function checkVeterinarianHandler(req: Request, _res: Response, next: NextFunction) {
+  const { veterinarianId } = req.params;
+  //if(veterinarianId) {
+    if(req.user?.id === Number(veterinarianId)) {
+      next()
+    } else {
+      next(boom.forbidden('Solo puedes acceder o modificar datos tu usuario'));
+    }
+  //} else {
+    //next();
+ // }
+}
+
 export async function checkVeterinarianInAppointment(req: Request, _res: Response, next: NextFunction) {
   const {veterinarianId} = req.body;
   if(req.user?.id === Number(veterinarianId)) {
