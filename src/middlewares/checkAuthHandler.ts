@@ -16,6 +16,7 @@ export async function checkAuthHandler(req: Request, _res: Response, next: NextF
     const {authorization} = req.headers;
     if (authorization && authorization.startsWith('Bearer')) {
       const token = authorization.split(' ')[1];
+      console.log(token);
       const decoded:any = jwt.verify(token, process.env.JWT_AUTH_SECRET ?? 'mysupersecretkey');
       if(!decoded) {
         throw boom.unauthorized('Token no valido')

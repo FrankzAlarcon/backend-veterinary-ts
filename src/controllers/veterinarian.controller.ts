@@ -18,17 +18,17 @@ const response = new Response();
 const veterinarianService = new VeterinarianService();
 
 /**get all veterinarians */
-router.get("/", async (_req, res, next) => {
+/*router.get("/", async (_req, res, next) => {
   try {
     const vets = await veterinarianService.getAll();
     response.success(res, vets);
   } catch (error) {
     next(error);
   }
-});
+});*/
 
 /**get a veterinarian by id */
-router.get(
+/*router.get(
   "/:id",
   validationHandler(veterinarianIdSchema, "params"),
   async (req, res, next) => {
@@ -40,7 +40,7 @@ router.get(
       next(error);
     }
   }
-);
+);*/
 
 router.get(
   "/:id/customers",
@@ -179,7 +179,7 @@ router.patch(
   }
 );
 /**Delete a veterinarian */
-router.delete(
+/*router.delete(
   "/:id",
   validationHandler(veterinarianIdSchema, "params"),
   async (req, res, next) => {
@@ -191,7 +191,7 @@ router.delete(
       next(error);
     }
   }
-);
+);*/
 
 /**Delete a task */
 router.delete(

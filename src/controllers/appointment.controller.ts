@@ -1,7 +1,7 @@
 import { Router } from "express";
 import boom from '@hapi/boom';
 import Response from "../libs/Response";
-import { checkGetOneAppointment, checkVeterinarianToDelete } from "../middlewares/checkAuthHandler";
+import { checkGetOneAppointment/*, checkVeterinarianToDelete*/ } from "../middlewares/checkAuthHandler";
 import { checkVeterinarianInAppointment } from "../middlewares/checkUserHandler";
 import { validationHandler } from "../middlewares/validationHandler";
 import { appointmentIdSchema, createAppointmentSchema, updateAppointmentSchema } from "../schemas/appointment.schema";
@@ -12,14 +12,14 @@ const response = new Response();
 const appointmentService = new AppointmentService;
 
 /**get all appointments */
-router.get('/', async (_req, res, next) => {
+/*router.get('/', async (_req, res, next) => {
   try {
     const appointments = await appointmentService.getAll();
     response.success(res, appointments);
   } catch (error) {
     next(error);
   }
-});
+});*/
 /**get an appointment by id */
 router.get('/:id', validationHandler(appointmentIdSchema, 'params'), async (req, res, next) => {
   try {
@@ -61,7 +61,7 @@ router.patch(
     }
 })
 
-router.delete('/:id', validationHandler(appointmentIdSchema, 'params'), checkVeterinarianToDelete, async (req, res, next) => {
+/*router.delete('/:id', validationHandler(appointmentIdSchema, 'params'), checkVeterinarianToDelete, async (req, res, next) => {
   try {
     const {id} = req.params;
     const message = await appointmentService.delete(Number(id));
@@ -69,6 +69,6 @@ router.delete('/:id', validationHandler(appointmentIdSchema, 'params'), checkVet
   } catch (error) {
     next(error);
   }
-})
+})*/
 
 export default router;

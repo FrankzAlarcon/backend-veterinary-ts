@@ -15,14 +15,14 @@ declare module "express" {
 }
 
 /**get all customers */
-router.get('/', async (_req, res, next) => {
+/*router.get('/', async (_req, res, next) => {
   try {
     const customers = await customerService.getAll();
     response.success(res, customers);
   } catch (error) {
     next(error);
   }
-});
+});*/
 /**Get a customer by id */
 router.get('/:id', validationHandler(getIdSchema, 'params'), async (req: Request, res, next) => {
   try {
