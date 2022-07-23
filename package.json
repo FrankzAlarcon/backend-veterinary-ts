@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon index.ts",
     "start": "node dist/index.js",
-    "build": "npm install typescript && npx tsc",
+    "build": "tsc",
     "postinstall": "npm run build"
   },
   "keywords": [],
@@ -22,7 +22,6 @@
     "chance": "^1.1.8",
     "nodemon": "^2.0.16",
     "ts-node": "^10.8.1",
-    "tsc": "^2.0.4",
     "typescript": "^4.7.4"
   },
   "dependencies": {
