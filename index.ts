@@ -13,8 +13,7 @@ const whiteList = [process.env.FRONTEND_URL]
 
 const corsOptions = {
   origin: (origin: string | undefined, next: any) => {
-    console.log(origin)
-    if(whiteList.includes(origin)) {
+    if(whiteList.includes(origin) || !origin) {
       next(null, true);
     } else {
       next(boom.unauthorized('Cors Error'));
