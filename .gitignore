@@ -219,5 +219,4 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/node,windows,linux,macos
 
 /db_data
-todos.ts
-prisma/migrations
+/prisma/migrations
