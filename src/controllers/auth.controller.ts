@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request } from "express";
 import Response from "../libs/Response";
 import { validationHandler } from "../middlewares/validationHandler";
 import { createUserSchema, emailSchema, loginSchema, recoveryPasswordSchema, tokenSchema } from "../schemas/auth.schema";
@@ -6,6 +6,12 @@ import AuthService from "../services/auth.service";
 import jwt from 'jsonwebtoken';
 import boom from '@hapi/boom';
 import { checkAuthHandler } from "../middlewares/checkAuthHandler";
+
+declare module "express" {
+  export interface Request {
+    user?: {id: number, name: string, email: string}
+  }
+}
 
 const router = Router();
 const response = new Response();
@@ -110,9 +116,9 @@ router.post('/recovery-password/:token',validationHandler(tokenSchema, 'params')
   }
 });
 
-router.get('/profile', checkAuthHandler, async (req, res, next) => {
+router.get('/profile', checkAuthHandler, async (req: Request, res, next) => {
   try {
-    const { user } = req;    
+    const { user } = req;
     response.success(res, user);
   } catch (error) {
     next(error);
