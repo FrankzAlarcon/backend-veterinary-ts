@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon index.ts",
     "start": "node dist/index.js",
-    "build": "tsc",
+    "build": "npx prisma migrate deploy && tsc",
     "postinstall": "npm run build"
   },
   "keywords": [],
