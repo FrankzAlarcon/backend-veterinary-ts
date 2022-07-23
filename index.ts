@@ -9,7 +9,7 @@ config();
 const app = express();
 const PORT = process.env.PORT ?? 3100;
 
-const whiteList = [process.env.FRONTEND_URL, process.env.FRONTEND_SERVER_URL]
+const whiteList = [process.env.FRONTEND_URL]
 
 const corsOptions = {
   origin: (origin: string | undefined, next: any) => {
