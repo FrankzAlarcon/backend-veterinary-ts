@@ -220,4 +220,4 @@ $RECYCLE.BIN/
 
 /db_data
 todos.ts
-src/prisma/migrations
+prisma/migrations
